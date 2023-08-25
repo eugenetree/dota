@@ -2,7 +2,10 @@ import "./style.css";
 import * as THREE from "three";
 import * as dat from "lil-gui";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+
+
 
 /**
  * Basics
@@ -23,23 +26,96 @@ scene.background = new THREE.Color(0x0088ff);
  */
 const gltfLoader = new GLTFLoader();
 let model = null;
-let mixer = null;
+let mixerPudge = null;
+let mixerSniper = null;
 
 let walk = null;
 let lookAround = null;
 let run = null;
 
+const tl = new THREE.TextureLoader();
+const texture = tl.load('model/textures/sb.png');
+
 gltfLoader.load(
-  "/models/Fox/glTF/Fox.gltf",
+  "/models/location.glb",
   (gltf) => {
-    model = gltf.scene.children[0];
+    model = gltf.scene;
+    console.log(gltf);
+    gltf.scene.traverse( child => {
 
-    mixer = new THREE.AnimationMixer(model);
-    walk = mixer.clipAction(gltf.animations[1]);
-    lookAround = mixer.clipAction(gltf.animations[0]);
-    run = mixer.clipAction(gltf.animations[2]);
+      if ( child.material ) child.material.metalness = 0;
+  
+  } );
+    // mixer = new THREE.AnimationMixer(model);
+    // const action = mixer.clipAction(gltf.animations[0]);
+    // action.play();
 
-    model.scale.set(0.025, 0.025, 0.025);
+    // console.log(gltf.scene.children[0]);
+    // gltf.scene.traverse((child) => {
+      // if (child.isMesh) {
+        // if (child.material.map) {
+          //replace the map with another THREE texture
+          // child.material.map = texture;
+          //update
+          // child.material.map.needsUpdate = true;
+        // }
+      // }
+    // })
+
+    // mixer = new THREE.AnimationMixer(model);
+    // walk = mixer.clipAction(gltf.animations[1]);
+    // lookAround = mixer.clipAction(gltf.animations[0]);
+    // run = mixer.clipAction(gltf.animations[2]);
+
+    // model.scale.set(0.025, 0.025, 0.025);
+    model.rotation.z = Math.PI
+    scene.add(model);
+  },
+  () => {
+    console.log("Model Loading");
+  },
+  () => {
+    console.log("Error, model not loaded");
+  }
+);
+
+gltfLoader.load(
+  "/models/pudge.glb",
+  (gltf) => {
+    model = gltf.scene;
+    console.log(gltf);
+
+    mixerPudge = new THREE.AnimationMixer(model);
+    const action = mixerPudge.clipAction(gltf.animations[0]);
+    action.play();
+
+    model.position.set(.8,0,-.5);
+    model.rotation.set(0, Math.PI / -1.3, 0)
+    model.scale.set(0.5, 0.5, 0.5);
+    scene.add(model);
+  },
+  () => {
+    console.log("Model Loading");
+  },
+  () => {
+    console.log("Error, model not loaded");
+  }
+);
+
+
+gltfLoader.load(
+  "/models/sniper.glb",
+  (gltf) => {
+    model = gltf.scene;
+    console.log(gltf);
+
+    mixerSniper = new THREE.AnimationMixer(model);
+    const action = mixerSniper.clipAction(gltf.animations[0]);
+    action.play();
+
+    model.position.set(-1,0,-.5);
+    model.rotation.set(0, Math.PI / 1.3, 0)
+    model.scale.set(0.5, 0.5, 0.5);
     scene.add(model);
   },
   () => {
@@ -70,31 +146,33 @@ const ground = new THREE.Mesh(
   })
 );
 ground.receiveShadow = true;
-ground.rotation.x = -Math.PI * 0.5;
-scene.add(ground);
+// ground.rotation.x = -Math.PI * 0.5;
+// scene.add(ground);
 
 /**
  * Lights
  */
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+const ambientLight = new THREE.AmbientLight(0xffffff, 3);
+// ambientLight.layers.set(1);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+const directionalLight = new THREE.DirectionalLight('white', 4);
 directionalLight.castShadow = false;
-// directionalLight.shadow.mapSize.set(1024, 1024);
+directionalLight.shadow.mapSize.set(1024, 1024);
 // directionalLight.shadow.camera.far = 15;
 // directionalLight.shadow.camera.left = -7;
 // directionalLight.shadow.camera.top = 7;
 // directionalLight.shadow.camera.right = 7;
 // directionalLight.shadow.camera.bottom = -7;
-directionalLight.position.set(-5, 5, 5);
-scene.add(directionalLight);
+// directionalLight.position.set(5, 10, -20);
+// directionalLight.target.position.set(0, 0, 0);
+// scene.add(directionalLight);
 
 /**
  * Fog
  */
-const fog = new THREE.Fog("#0088ff", 10, 40);
-scene.fog = fog;
+// const fog = new THREE.Fog("#0088ff", 10, 40);
+// scene.fog = fog;
 
 /**
  * Sizes
@@ -128,16 +206,17 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-camera.position.set(2, 8, 12);
+camera.position.set(0, 1, -2);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
 scene.add(camera);
 
 // Orbit Controls
 // const controls = new OrbitControls(camera, canvas);
-// controls.target.set(0, 0.75, 0);
+// controls.target.set(0, 0, 0);
 // controls.enableDamping = true;
-// controls.zoomSpeed = 0.5;
+// controls.zoomSpeed = 3.5;
 // controls.maxDistance = 28;
-// controls.minDistance = 4;
+// controls.minDistance = 0;
 // controls.maxPolarAngle = Math.PI / 2 - 0.02;
 // controls.minPolarAngle = Math.PI / 4;
 // controls.minZoom = 20;
@@ -169,7 +248,7 @@ document.onkeydown = (e) => {
       model.rotation.y = Math.PI;
     }
     model.position.z -= walkingSpeed;
-    walk.play();
+    // walk.play();
   }
 
   // Down
@@ -178,7 +257,7 @@ document.onkeydown = (e) => {
       model.rotation.y = 0;
     }
     model.position.z += walkingSpeed;
-    walk.play(); // will play when we update the mixer on each frame
+    // walk.play(); // will play when we update the mixer on each frame
   }
 
   // Right
@@ -187,7 +266,7 @@ document.onkeydown = (e) => {
       model.rotation.y = Math.PI / 2;
     }
     model.position.x += walkingSpeed;
-    walk.play(); // will play when we update the mixer on each frame
+    // walk.play(); // will play when we update the mixer on each frame
   }
 
   // Left
@@ -196,36 +275,36 @@ document.onkeydown = (e) => {
       model.rotation.y = -Math.PI / 2;
     }
     model.position.x -= walkingSpeed;
-    walk.play(); // will play when we update the mixer on each frame
+    // walk.play(); // will play when we update the mixer on each frame
   }
 
   // LOOK AROUND
   else if (e.key === " ") {
-    lookAround.play(); // will play when we update the mixer on each frame
+    // lookAround.play(); // will play when we update the mixer on each frame
   }
 };
 
 // Stop movement
 document.onkeyup = (e) => {
   if (e.key === "ArrowUp") {
-    walk.stop();
+    // walk.stop();
   } else if (e.key === "ArrowDown") {
-    walk.stop();
+    // walk.stop();
   } else if (e.key === "ArrowRight") {
-    walk.stop();
+    // walk.stop();
   } else if (e.key === "ArrowLeft") {
-    walk.stop();
+    // walk.stop();
   } else if (e.key === " ") {
-    lookAround.stop();
+    // lookAround.stop();
   }
 };
 
 /**
  * Camera movement
  */
-const cameraOffset = new THREE.Vector3(-4.0, 4.0, 7.0); // distance between camera and object
-let modelPosition = new THREE.Vector3();
-camera.position.copy(modelPosition).add(cameraOffset);
+// const cameraOffset = new THREE.Vector3(-5.0, 1.0, -4.0); // distance between camera and object
+// let modelPosition = new THREE.Vector3();
+// camera.position.copy(modelPosition).add(cameraOffset);
 
 /**
  * Animate
@@ -239,20 +318,25 @@ const animate = () => {
   previousTime = elapsedTime;
 
   // update mixer
-  if (mixer) {
-    mixer.update(deltaTime);
+  if (mixerSniper) {
+    mixerSniper.update(deltaTime);
   }
 
-  if (model) {
-    model.getWorldPosition(modelPosition);
+  if (mixerPudge) {
+    mixerPudge.update(deltaTime);
   }
+  
+  // if (model) {
+    // model.getWorldPosition(modelPosition);
+  // }
 
   // Update orbit controls
   // controls.update();
 
   // Update camera
-  camera.position.copy(modelPosition).add(cameraOffset);
-  camera.lookAt(modelPosition);
+  // camera.position.copy(modelPosition).add(cameraOffset);
+  // camera.lookAt(modelPosition);
+  // controls.update();
 
   // Render
   renderer.render(scene, camera);
@@ -299,15 +383,3 @@ document.addEventListener("keydown", (e) => {
 
 help.appendChild(close);
 document.body.appendChild(help);
-
-/**
- * Title
- */
-const title = document.createElement("h1");
-title.setAttribute("id", "title");
-title.innerHTML = `
-<span id="fantastic">( Not so Fantastic )</span>
-<br>
-Mr. Fox
-`;
-document.body.appendChild(title);
